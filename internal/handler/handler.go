@@ -8,7 +8,8 @@ import (
 	"github.com/go-telegram/bot/models"
 )
 
-type Handler struct{}
+type Handler struct {
+}
 
 func New() *Handler {
 	return &Handler{}
