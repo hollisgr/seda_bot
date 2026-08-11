@@ -3,12 +3,16 @@ package handler
 import (
 	"context"
 	"fmt"
+	"sedabot/internal/model"
 
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 )
 
-type UserUseCase interface{}
+type UserUseCase interface {
+	SaveUser(ctx context.Context, user model.User) (int, error)
+	LoadUser(ctx context.Context, tgId int) (model.User, error)
+}
 
 type Handler struct {
 	userUC UserUseCase
