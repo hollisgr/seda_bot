@@ -7,18 +7,25 @@ import (
 	"os/signal"
 	"sedabot/internal/config"
 	"sedabot/internal/handler"
-	"sedabot/pkg/postgres"
+	"sedabot/internal/storage/postgres"
+	"sedabot/internal/usecase"
+	"sedabot/pkg/psqlclient"
 
 	"github.com/go-telegram/bot"
 )
 
 func main() {
 	cfg := config.LoadConfig(".env")
-	pool, err := postgres.NewPool(context.Background(), 3, cfg.Postgres.DSN())
+	pool, err := psqlclient.NewPool(context.Background(), 3, cfg.Postgres.DSN())
 	if err != nil {
 		log.Fatalln("postgres new pool err: ", err)
 	}
-	handler := handler.New()
+
+	storage := postgres.New(pool)
+
+	handler := handler.New(
+		usecase.NewUserUseCase(storage),
+	)
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()

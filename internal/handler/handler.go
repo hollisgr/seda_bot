@@ -8,11 +8,16 @@ import (
 	"github.com/go-telegram/bot/models"
 )
 
+type UserUseCase interface{}
+
 type Handler struct {
+	userUC UserUseCase
 }
 
-func New() *Handler {
-	return &Handler{}
+func New(user UserUseCase) *Handler {
+	return &Handler{
+		userUC: user,
+	}
 }
 
 func (h *Handler) Register(b *bot.Bot) {
@@ -28,7 +33,7 @@ func (h *Handler) Default(ctx context.Context, b *bot.Bot, update *models.Update
 
 func (h *Handler) StartHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	firstName := update.Message.From.FirstName
-	text := fmt.Sprintf("Hello %s!\nWelcome to SedaBot!", firstName)
+	text := fmt.Sprintf("Hello, %s!\nWelcome to SedaBot!", firstName)
 
 	b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: update.Message.Chat.ID,

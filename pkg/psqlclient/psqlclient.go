@@ -1,4 +1,4 @@
-package postgres
+package psqlclient
 
 import (
 	"context"
