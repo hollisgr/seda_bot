@@ -15,6 +15,7 @@ import (
 )
 
 func main() {
+	log.Println("version 0.0.1a")
 	cfg := config.LoadConfig(".env")
 	pool, err := psqlclient.NewPool(context.Background(), 3, cfg.Postgres.DSN())
 	if err != nil {
@@ -40,6 +41,7 @@ func main() {
 	}
 
 	handler.Register(b)
+	log.Println("ready to register")
 
 	b.Start(ctx)
 }

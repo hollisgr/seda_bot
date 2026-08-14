@@ -2,7 +2,9 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"log"
 	"sedabot/internal/model"
 
 	"github.com/go-telegram/bot"
@@ -29,18 +31,54 @@ func (h *Handler) Register(b *bot.Bot) {
 }
 
 func (h *Handler) Default(ctx context.Context, b *bot.Bot, update *models.Update) {
-	b.SendMessage(ctx, &bot.SendMessageParams{
-		ChatID: update.Message.Chat.ID,
-		Text:   update.Message.Text,
-	})
+
+	h.sendMessage(ctx, b, update.Message.Chat.ID, update.Message.Text)
 }
 
 func (h *Handler) StartHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
-	firstName := update.Message.From.FirstName
-	text := fmt.Sprintf("Hello, %s!\nWelcome to SedaBot!", firstName)
+	if update.Message == nil || update.Message.From == nil {
+		return
+	}
 
+	chatId := update.Message.Chat.ID
+	fromUser := update.Message.From
+
+	var text string
+
+	_, err := h.userUC.LoadUser(ctx, int(fromUser.ID))
+
+	switch {
+	case err == nil:
+		text = fmt.Sprintf("Hello, %s!\nWelcome back!", fromUser.FirstName)
+
+	case errors.Is(err, model.ErrNotFound):
+		id, err := h.userUC.SaveUser(ctx, model.User{
+			TgId:      int(fromUser.ID),
+			ChatId:    int(chatId),
+			Name:      fromUser.Username,
+			FirstName: fromUser.FirstName,
+			LastName:  fromUser.LastName,
+		})
+
+		if err != nil {
+			log.Println("start handler save user err: ", err)
+			text = "internal error, try later"
+		} else {
+			text = fmt.Sprintf("Hello, %s!\nWelcome to SedaBot!", fromUser.FirstName)
+			log.Println("start handler save user succes, id: ", id)
+		}
+
+	default:
+		log.Println("start handler load user err: ", err)
+		text = "internal error, try later"
+	}
+
+	h.sendMessage(ctx, b, chatId, text)
+}
+
+func (h *Handler) sendMessage(ctx context.Context, b *bot.Bot, chatId int64, text string) {
 	b.SendMessage(ctx, &bot.SendMessageParams{
-		ChatID: update.Message.Chat.ID,
+		ChatID: chatId,
 		Text:   text,
 	})
 }
