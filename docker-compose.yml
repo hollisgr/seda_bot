@@ -11,8 +11,6 @@ services:
         condition: service_healthy
       migration:
         condition: service_completed_successfully
-    ports: 
-      - "${DOCKER_SERVICE_PORT}:${LISTEN_PORT}"
     
   postgres:
     image: postgres:16-alpine
