@@ -22,6 +22,7 @@ func (p PostgresCfg) DSN() string {
 
 type Config struct {
 	BotToken string `env:"BOT_TOKEN"`
+	OwnerId  int64  `env:"OWNER_ID"`
 	Postgres PostgresCfg
 }
 
