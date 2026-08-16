@@ -22,10 +22,12 @@ func main() {
 		log.Fatalln("postgres new pool err: ", err)
 	}
 
-	storage := postgres.New(pool)
+	userStorage := postgres.NewUserStorage(pool)
+	EventStorage := postgres.NewEventStorage(pool)
 
 	handler := handler.New(
-		usecase.NewUserUseCase(storage),
+		usecase.NewUserUseCase(userStorage),
+		usecase.NewEventUseCase(EventStorage),
 		cfg,
 	)
 

@@ -7,9 +7,20 @@ import (
 	"sedabot/internal/model"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func (s *Storage) SaveUser(ctx context.Context, user model.User) (int, error) {
+type UserStorage struct {
+	db *pgxpool.Pool
+}
+
+func NewUserStorage(p *pgxpool.Pool) *UserStorage {
+	return &UserStorage{
+		db: p,
+	}
+}
+
+func (s *UserStorage) SaveUser(ctx context.Context, user model.User) (int, error) {
 	var id int
 	query := `
 		INSERT INTO users(tg_id, chat_id, first_name, last_name, name)
@@ -33,7 +44,7 @@ func (s *Storage) SaveUser(ctx context.Context, user model.User) (int, error) {
 	return id, nil
 }
 
-func (s *Storage) LoadUserByTgId(ctx context.Context, tgId int) (model.User, error) {
+func (s *UserStorage) LoadUserByTgId(ctx context.Context, tgId int) (model.User, error) {
 	var res model.User
 	query := `
 		SELECT
@@ -71,7 +82,7 @@ func (s *Storage) LoadUserByTgId(ctx context.Context, tgId int) (model.User, err
 	return res, nil
 }
 
-func (s *Storage) LoadUserList(ctx context.Context, offset int, limit int) ([]model.User, error) {
+func (s *UserStorage) LoadUserList(ctx context.Context, offset int, limit int) ([]model.User, error) {
 	var res []model.User
 
 	query := `
@@ -110,7 +121,7 @@ func (s *Storage) LoadUserList(ctx context.Context, offset int, limit int) ([]mo
 	return res, nil
 }
 
-func (s *Storage) SetRole(ctx context.Context, tgId int, role model.Role) error {
+func (s *UserStorage) SetRole(ctx context.Context, tgId int, role model.Role) error {
 	var id int
 	query := `
 		UPDATE users
