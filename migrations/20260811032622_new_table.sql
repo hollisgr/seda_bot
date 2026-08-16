@@ -1,6 +1,5 @@
 -- +goose Up
 -- +goose StatementBegin
-
 CREATE TABLE users(
     id SERIAL PRIMARY KEY,
     tg_id INTEGER NOT NULL CHECK(tg_id > 0),
@@ -9,10 +8,9 @@ CREATE TABLE users(
     first_name TEXT NOT NULL,
     last_name TEXT
 );
-
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
-SELECT 'down SQL query';
+DROP TABLE users;
 -- +goose StatementEnd
