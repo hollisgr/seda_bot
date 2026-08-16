@@ -113,10 +113,11 @@ func (s *UserStorage) LoadUserList(ctx context.Context, offset int, limit int) (
 
 	res, err = pgx.CollectRows(rows, pgx.RowToStructByName[model.User])
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return res, model.ErrNotFound
-		}
 		return res, fmt.Errorf("db load user list collect err: %w", err)
+	}
+
+	if len(res) == 0 {
+		return res, model.ErrNotFound
 	}
 	return res, nil
 }
