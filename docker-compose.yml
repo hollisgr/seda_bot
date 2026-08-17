@@ -31,12 +31,11 @@ services:
       - "${DOCKER_PSQL_PORT}:${PSQL_PORT}"
 
   migration:
-    container_name: seda_bot-dev-migrator
-    build:
-      context: ./
-      dockerfile: ./build/migrator/dockerfile
+    image: ghcr.io/kukymbr/goose-docker-cmd:latest
+    volumes:
+      - ./migrations:/migrations
     command:
-      ["goose", "-dir", "migrations", "postgres", "host=${PSQL_HOST} port=${PSQL_PORT} dbname=${PSQL_NAME} user=${PSQL_USER} password=${PSQL_PASSWORD} sslmode=disable", "up"]
+      ["-dir", "/migrations", "postgres", "host=${PSQL_HOST} port=${PSQL_PORT} dbname=${PSQL_NAME} user=${PSQL_USER} password=${PSQL_PASSWORD} sslmode=disable", "up"]
     depends_on:
       postgres:
         condition: service_healthy
