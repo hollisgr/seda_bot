@@ -24,7 +24,9 @@ func (h *Handler) UserList(ctx context.Context, b *bot.Bot, update *models.Updat
 	if update.Message == nil || update.Message.From == nil {
 		return
 	}
+
 	chatId := update.Message.Chat.ID
+
 	list, err := h.userUC.LoadUserList(ctx, 0, 20)
 	if err != nil {
 		if errors.Is(err, model.ErrNotFound) {
@@ -38,7 +40,7 @@ func (h *Handler) UserList(ctx context.Context, b *bot.Bot, update *models.Updat
 	}
 
 	var builder strings.Builder
-	builder.WriteString("<b>User List</b>\n\n")
+	builder.WriteString("User List\n\n")
 	builder.WriteString("id, tg_id, username, first name, last name, role\n")
 
 	for _, user := range list {
@@ -70,14 +72,15 @@ func (h *Handler) SetRole(ctx context.Context, b *bot.Bot, update *models.Update
 		return
 	}
 
-	tgId, err := strconv.Atoi(tgIdInput)
+	tgId, err := strconv.ParseInt(tgIdInput, 10, 64)
+
 	if err != nil {
 		log.Println("set role handler conv err: ", err)
 		h.sendMessage(ctx, b, chatId, "internal error")
 		return
 	}
 
-	err = h.userUC.SetRole(ctx, int64(tgId), roleInput)
+	err = h.userUC.SetRole(ctx, tgId, roleInput)
 	if err != nil {
 		if errors.Is(err, model.ErrNotFound) {
 			h.sendMessage(ctx, b, chatId, "user not found")
@@ -88,6 +91,6 @@ func (h *Handler) SetRole(ctx context.Context, b *bot.Bot, update *models.Update
 		h.sendMessage(ctx, b, chatId, "internal error")
 		return
 	}
-
-	h.sendMessage(ctx, b, chatId, fmt.Sprintf("The user's role with tg_id: %d has been successfully changed to %s", tgId, roleInput))
+	text := fmt.Sprintf("The user's role with tg_id: %d has been successfully changed to %s", tgId, roleInput)
+	h.sendMessage(ctx, b, chatId, text)
 }

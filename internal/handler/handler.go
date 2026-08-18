@@ -15,14 +15,18 @@ import (
 type EventUseCase interface{}
 
 type Handler struct {
-	cfg    *config.Config
-	userUC UserUseCase
+	cfg           *config.Config
+	userUC        UserUseCase
+	adminKeyBoard *models.ReplyKeyboardMarkup
+	userKeyBoard  *models.ReplyKeyboardMarkup
 }
 
 func New(user UserUseCase, event EventUseCase, cfg *config.Config) *Handler {
 	return &Handler{
-		userUC: user,
-		cfg:    cfg,
+		userUC:        user,
+		cfg:           cfg,
+		adminKeyBoard: newAdminKeyboard(),
+		userKeyBoard:  newUserKeyboard(),
 	}
 }
 
@@ -46,13 +50,7 @@ func (h *Handler) Default(ctx context.Context, b *bot.Bot, update *models.Update
 		return
 	}
 
-	var markup *models.ReplyKeyboardMarkup
-	if user.Role == model.RoleAdmin {
-		markup = h.getAdminKeyboard()
-	} else {
-		markup = h.getUserKeyboard()
-	}
-	h.sendMessageWithKeyboard(ctx, b, chatId, "main menu", markup)
+	h.sendMessageWithKeyboard(ctx, b, chatId, "main menu", h.getMarkup(user.Role))
 }
 
 func (h *Handler) StartHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
@@ -98,13 +96,7 @@ func (h *Handler) StartHandler(ctx context.Context, b *bot.Bot, update *models.U
 		text = "internal error, try later"
 	}
 
-	var markup *models.ReplyKeyboardMarkup
-	if user.Role == model.RoleAdmin {
-		markup = h.getAdminKeyboard()
-	} else {
-		markup = h.getUserKeyboard()
-	}
-	h.sendMessageWithKeyboard(ctx, b, chatId, text, markup)
+	h.sendMessageWithKeyboard(ctx, b, chatId, text, h.getMarkup(user.Role))
 }
 
 func (h *Handler) sendMessage(ctx context.Context, b *bot.Bot, chatId int64, text string) {
@@ -122,7 +114,7 @@ func (h *Handler) sendMessageWithKeyboard(ctx context.Context, b *bot.Bot, chatI
 	})
 }
 
-func (h *Handler) getUserKeyboard() *models.ReplyKeyboardMarkup {
+func newUserKeyboard() *models.ReplyKeyboardMarkup {
 	return &models.ReplyKeyboardMarkup{
 		Keyboard: [][]models.KeyboardButton{
 			{
@@ -138,7 +130,7 @@ func (h *Handler) getUserKeyboard() *models.ReplyKeyboardMarkup {
 	}
 }
 
-func (h *Handler) getAdminKeyboard() *models.ReplyKeyboardMarkup {
+func newAdminKeyboard() *models.ReplyKeyboardMarkup {
 	return &models.ReplyKeyboardMarkup{
 		Keyboard: [][]models.KeyboardButton{
 			{
@@ -152,4 +144,11 @@ func (h *Handler) getAdminKeyboard() *models.ReplyKeyboardMarkup {
 		},
 		ResizeKeyboard: true,
 	}
+}
+
+func (h *Handler) getMarkup(role model.Role) *models.ReplyKeyboardMarkup {
+	if role == model.RoleAdmin {
+		return h.adminKeyBoard
+	}
+	return h.userKeyBoard
 }
