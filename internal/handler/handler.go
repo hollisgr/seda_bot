@@ -43,7 +43,29 @@ func (h *Handler) Default(ctx context.Context, b *bot.Bot, update *models.Update
 	if update.Message == nil || update.Message.From == nil {
 		return
 	}
-	h.sendMessage(ctx, b, update.Message.Chat.ID, update.Message.Text)
+
+	var isAdmin bool
+
+	fromUser := update.Message.From
+	chatId := update.Message.Chat.ID
+
+	user, err := h.userUC.LoadUser(ctx, int(fromUser.ID))
+	if err != nil {
+		h.sendMessage(ctx, b, chatId, "internal error, try later")
+		return
+	}
+
+	if user.Role == model.RoleAdmin {
+		isAdmin = true
+	}
+
+	var markup *models.ReplyKeyboardMarkup
+	if isAdmin {
+		markup = getAdminKeyboard()
+	} else {
+		markup = getUserKeyboard()
+	}
+	h.sendMessageWithKeyboard(ctx, b, chatId, "main menu", markup)
 }
 
 func (h *Handler) StartHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
@@ -51,16 +73,21 @@ func (h *Handler) StartHandler(ctx context.Context, b *bot.Bot, update *models.U
 		return
 	}
 
+	var isAdmin bool
+
 	chatId := update.Message.Chat.ID
 	fromUser := update.Message.From
 
 	var text string
 
-	_, err := h.userUC.LoadUser(ctx, int(fromUser.ID))
+	user, err := h.userUC.LoadUser(ctx, int(fromUser.ID))
 
 	switch {
 	case err == nil:
 		text = fmt.Sprintf("Hello, %s!\nWelcome back!", fromUser.FirstName)
+		if user.Role == model.RoleAdmin {
+			isAdmin = true
+		}
 
 	case errors.Is(err, model.ErrNotFound):
 		id, err := h.userUC.SaveUser(ctx, model.User{
@@ -84,7 +111,13 @@ func (h *Handler) StartHandler(ctx context.Context, b *bot.Bot, update *models.U
 		text = "internal error, try later"
 	}
 
-	h.sendMessage(ctx, b, chatId, text)
+	var markup *models.ReplyKeyboardMarkup
+	if isAdmin {
+		markup = getAdminKeyboard()
+	} else {
+		markup = getUserKeyboard()
+	}
+	h.sendMessageWithKeyboard(ctx, b, chatId, text, markup)
 }
 
 func (h *Handler) sendMessage(ctx context.Context, b *bot.Bot, chatId int64, text string) {
@@ -92,4 +125,44 @@ func (h *Handler) sendMessage(ctx context.Context, b *bot.Bot, chatId int64, tex
 		ChatID: chatId,
 		Text:   text,
 	})
+}
+
+func (h *Handler) sendMessageWithKeyboard(ctx context.Context, b *bot.Bot, chatId int64, text string, markup *models.ReplyKeyboardMarkup) {
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID:      chatId,
+		Text:        text,
+		ReplyMarkup: markup,
+	})
+}
+
+func getUserKeyboard() *models.ReplyKeyboardMarkup {
+	return &models.ReplyKeyboardMarkup{
+		Keyboard: [][]models.KeyboardButton{
+			{
+				{Text: "USER BTN 1"},
+				{Text: "USER BTN 2"},
+			},
+			{
+				{Text: "USER BTN 3"},
+				{Text: "USER BTN 4"},
+			},
+		},
+		ResizeKeyboard: true,
+	}
+}
+
+func getAdminKeyboard() *models.ReplyKeyboardMarkup {
+	return &models.ReplyKeyboardMarkup{
+		Keyboard: [][]models.KeyboardButton{
+			{
+				{Text: "ADMIN BTN 1"},
+				{Text: "ADMIN BTN 2"},
+			},
+			{
+				{Text: "ADMIN BTN 3"},
+				{Text: "ADMIN BTN 4"},
+			},
+		},
+		ResizeKeyboard: true,
+	}
 }
