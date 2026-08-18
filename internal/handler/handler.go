@@ -32,8 +32,8 @@ func New(user UserUseCase, event EventUseCase, cfg *config.Config) *Handler {
 
 func (h *Handler) Register(b *bot.Bot) {
 	b.RegisterHandler(bot.HandlerTypeMessageText, "/start", bot.MatchTypeExact, h.StartHandler)
-	b.RegisterHandler(bot.HandlerTypeMessageText, "/user_list", bot.MatchTypeExact, h.AdminOnly(h.UserList))
-	b.RegisterHandler(bot.HandlerTypeMessageText, "/set_role", bot.MatchTypePrefix, h.AdminOnly(h.SetRole))
+	b.RegisterHandler(bot.HandlerTypeMessageText, "/user_list", bot.MatchTypeExact, h.OwnerOnly(h.UserList))
+	b.RegisterHandler(bot.HandlerTypeMessageText, "/set_role", bot.MatchTypePrefix, h.OwnerOnly(h.SetRole))
 }
 
 func (h *Handler) Default(ctx context.Context, b *bot.Bot, update *models.Update) {
