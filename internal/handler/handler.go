@@ -12,13 +12,6 @@ import (
 	"github.com/go-telegram/bot/models"
 )
 
-type UserUseCase interface {
-	SaveUser(ctx context.Context, user model.User) (int, error)
-	LoadUser(ctx context.Context, tgId int) (model.User, error)
-	LoadUserList(ctx context.Context, offset int, limit int) ([]model.User, error)
-	SetRole(ctx context.Context, tgId int, role model.Role) error
-}
-
 type EventUseCase interface{}
 
 type Handler struct {
@@ -49,7 +42,7 @@ func (h *Handler) Default(ctx context.Context, b *bot.Bot, update *models.Update
 	fromUser := update.Message.From
 	chatId := update.Message.Chat.ID
 
-	user, err := h.userUC.LoadUser(ctx, int(fromUser.ID))
+	user, err := h.userUC.LoadUser(ctx, fromUser.ID)
 	if err != nil {
 		h.sendMessage(ctx, b, chatId, "internal error, try later")
 		return
@@ -80,7 +73,7 @@ func (h *Handler) StartHandler(ctx context.Context, b *bot.Bot, update *models.U
 
 	var text string
 
-	user, err := h.userUC.LoadUser(ctx, int(fromUser.ID))
+	user, err := h.userUC.LoadUser(ctx, fromUser.ID)
 
 	switch {
 	case err == nil:

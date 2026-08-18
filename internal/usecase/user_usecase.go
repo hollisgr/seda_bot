@@ -8,9 +8,9 @@ import (
 
 type UserRepository interface {
 	SaveUser(ctx context.Context, user model.User) (int, error)
-	LoadUserByTgId(ctx context.Context, tgId int) (model.User, error)
+	LoadUserByTgId(ctx context.Context, tgId int64) (model.User, error)
 	LoadUserList(ctx context.Context, offset int, limit int) ([]model.User, error)
-	SetRole(ctx context.Context, tgId int, role model.Role) error
+	SetRole(ctx context.Context, tgId int64, role model.Role) error
 }
 
 type UserUseCase struct {
@@ -32,7 +32,7 @@ func (u *UserUseCase) LoadUserList(ctx context.Context, offset int, limit int) (
 	return list, nil
 }
 
-func (u *UserUseCase) SetRole(ctx context.Context, tgId int, role model.Role) error {
+func (u *UserUseCase) SetRole(ctx context.Context, tgId int64, role model.Role) error {
 	if role != model.RoleAdmin && role != model.RoleUser {
 		return fmt.Errorf("user usecase set role err: invalid role %s", role)
 	}
@@ -54,7 +54,7 @@ func (u *UserUseCase) SaveUser(ctx context.Context, user model.User) (int, error
 	return res, nil
 }
 
-func (u *UserUseCase) LoadUser(ctx context.Context, tgId int) (model.User, error) {
+func (u *UserUseCase) LoadUser(ctx context.Context, tgId int64) (model.User, error) {
 	user, err := u.userRepo.LoadUserByTgId(ctx, tgId)
 	if err != nil {
 		return user, err

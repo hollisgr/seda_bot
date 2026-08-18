@@ -13,6 +13,13 @@ import (
 	"github.com/go-telegram/bot/models"
 )
 
+type UserUseCase interface {
+	SaveUser(ctx context.Context, user model.User) (int, error)
+	LoadUser(ctx context.Context, tgId int64) (model.User, error)
+	LoadUserList(ctx context.Context, offset int, limit int) ([]model.User, error)
+	SetRole(ctx context.Context, tgId int64, role model.Role) error
+}
+
 func (h *Handler) UserList(ctx context.Context, b *bot.Bot, update *models.Update) {
 	if update.Message == nil || update.Message.From == nil {
 		return
@@ -70,7 +77,7 @@ func (h *Handler) SetRole(ctx context.Context, b *bot.Bot, update *models.Update
 		return
 	}
 
-	err = h.userUC.SetRole(ctx, tgId, roleInput)
+	err = h.userUC.SetRole(ctx, int64(tgId), roleInput)
 	if err != nil {
 		if errors.Is(err, model.ErrNotFound) {
 			h.sendMessage(ctx, b, chatId, "user not found")

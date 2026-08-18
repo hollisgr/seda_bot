@@ -44,7 +44,7 @@ func (s *UserStorage) SaveUser(ctx context.Context, user model.User) (int, error
 	return id, nil
 }
 
-func (s *UserStorage) LoadUserByTgId(ctx context.Context, tgId int) (model.User, error) {
+func (s *UserStorage) LoadUserByTgId(ctx context.Context, tgId int64) (model.User, error) {
 	var res model.User
 	query := `
 		SELECT
@@ -122,7 +122,7 @@ func (s *UserStorage) LoadUserList(ctx context.Context, offset int, limit int) (
 	return res, nil
 }
 
-func (s *UserStorage) SetRole(ctx context.Context, tgId int, role model.Role) error {
+func (s *UserStorage) SetRole(ctx context.Context, tgId int64, role model.Role) error {
 	var id int
 	query := `
 		UPDATE users
