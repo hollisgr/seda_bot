@@ -7,6 +7,12 @@ const (
 	RoleAdmin Role = "admin"
 )
 
+type State string
+
+const (
+	MainMenu State = "main_menu"
+)
+
 type User struct {
 	Id        int    `db:"id"`
 	TgId      int64  `db:"tg_id"`
@@ -15,4 +21,5 @@ type User struct {
 	FirstName string `db:"first_name"`
 	LastName  string `db:"last_name"`
 	Role      Role   `db:"role"`
+	State     State  `db:"state"`
 }
