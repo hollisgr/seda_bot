@@ -19,6 +19,7 @@ type Handler struct {
 	userUC        UserUseCase
 	adminKeyBoard *models.ReplyKeyboardMarkup
 	userKeyBoard  *models.ReplyKeyboardMarkup
+	eventDrafts   map[int64]model.Event
 }
 
 func New(user UserUseCase, event EventUseCase, cfg *config.Config) *Handler {
@@ -27,6 +28,7 @@ func New(user UserUseCase, event EventUseCase, cfg *config.Config) *Handler {
 		cfg:           cfg,
 		adminKeyBoard: newAdminKeyboard(),
 		userKeyBoard:  newUserKeyboard(),
+		eventDrafts:   make(map[int64]model.Event),
 	}
 }
 
@@ -46,11 +48,30 @@ func (h *Handler) Default(ctx context.Context, b *bot.Bot, update *models.Update
 
 	user, err := h.userUC.LoadUser(ctx, fromUser.ID)
 	if err != nil {
+		if errors.Is(err, model.ErrNotFound) {
+			h.sendMessage(ctx, b, chatId, "user not found, try /start")
+			return
+		}
 		h.sendMessage(ctx, b, chatId, "internal error, try later")
 		return
 	}
 
-	h.sendMessageWithKeyboard(ctx, b, chatId, "main menu", h.getMarkup(user.Role))
+	switch user.State {
+	case model.EventTypeAwaiting:
+		h.SaveEventType(ctx, b, update)
+	case model.EventNameAwaiting:
+		h.SaveEventName(ctx, b, update)
+	case model.EventDescriptionAwaiting:
+		h.SaveEventDescription(ctx, b, update)
+	case model.EventDateAwaiting:
+		h.SaveEventDate(ctx, b, update)
+	case model.EventTimeAwaiting:
+		h.SaveEventTime(ctx, b, update)
+	default:
+		h.sendMessageWithKeyboard(ctx, b, chatId, "main menu", h.getMarkup(user.Role))
+		return
+	}
+
 }
 
 func (h *Handler) StartHandler(ctx context.Context, b *bot.Bot, update *models.Update) {

@@ -148,3 +148,30 @@ func (s *UserStorage) SetRole(ctx context.Context, tgId int64, role model.Role) 
 	}
 	return nil
 }
+
+func (s *UserStorage) SetState(ctx context.Context, tgId int64, state model.State) error {
+	var id int
+	query := `
+		UPDATE users
+		SET
+			state = @state
+		WHERE
+			tg_id = @tg_id
+		RETURNING id
+	`
+
+	args := pgx.NamedArgs{
+		"state": state,
+		"tg_id": tgId,
+	}
+
+	row := s.db.QueryRow(ctx, query, args)
+	err := row.Scan(&id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return model.ErrNotFound
+		}
+		return fmt.Errorf("db set state row scan error: %w", err)
+	}
+	return nil
+}

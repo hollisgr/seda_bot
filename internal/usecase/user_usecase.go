@@ -14,6 +14,7 @@ type UserRepository interface {
 	LoadUserByTgId(ctx context.Context, tgId int64) (model.User, error)
 	LoadUserList(ctx context.Context, offset int, limit int) ([]model.User, error)
 	SetRole(ctx context.Context, tgId int64, role model.Role) error
+	SetState(ctx context.Context, tgId int64, state model.State) error
 }
 
 type UserUseCase struct {
@@ -48,6 +49,25 @@ func (u *UserUseCase) SetRole(ctx context.Context, tgId int64, role model.Role) 
 	}
 
 	u.cache.Remove(tgId)
+
+	return nil
+}
+
+func (u *UserUseCase) SetState(ctx context.Context, tgId int64, state model.State) error {
+	if !state.IsValid() {
+		return fmt.Errorf("user usecase set state err: invalid state %s", state)
+	}
+
+	err := u.userRepo.SetState(ctx, tgId, state)
+	if err != nil {
+		return err
+	}
+
+	user, ok := u.cache.Get(tgId)
+	if ok {
+		user.State = state
+		u.cache.Add(tgId, user)
+	}
 
 	return nil
 }
