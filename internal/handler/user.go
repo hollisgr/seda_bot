@@ -18,6 +18,7 @@ type UserUseCase interface {
 	LoadUser(ctx context.Context, tgId int64) (model.User, error)
 	LoadUserList(ctx context.Context, offset int, limit int) ([]model.User, error)
 	SetRole(ctx context.Context, tgId int64, role model.Role) error
+	SetState(ctx context.Context, tgId int64, state model.State) error
 }
 
 func (h *Handler) UserList(ctx context.Context, b *bot.Bot, update *models.Update) {

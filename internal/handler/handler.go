@@ -7,28 +7,37 @@ import (
 	"log"
 	"sedabot/internal/config"
 	"sedabot/internal/model"
+	"sync"
 
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 )
 
-type EventUseCase interface{}
+type EventUseCase interface {
+	Save(ctx context.Context, event model.Event) (int, error)
+	Load(ctx context.Context, id int) (model.Event, error)
+	LoadActive(ctx context.Context) ([]model.Event, error)
+}
 
 type Handler struct {
 	cfg           *config.Config
 	userUC        UserUseCase
+	eventUC       EventUseCase
 	adminKeyBoard *models.ReplyKeyboardMarkup
 	userKeyBoard  *models.ReplyKeyboardMarkup
 	eventDrafts   map[int64]model.Event
+	mu            sync.Mutex
 }
 
 func New(user UserUseCase, event EventUseCase, cfg *config.Config) *Handler {
 	return &Handler{
 		userUC:        user,
+		eventUC:       event,
 		cfg:           cfg,
 		adminKeyBoard: newAdminKeyboard(),
 		userKeyBoard:  newUserKeyboard(),
 		eventDrafts:   make(map[int64]model.Event),
+		mu:            sync.Mutex{},
 	}
 }
 
@@ -56,22 +65,24 @@ func (h *Handler) Default(ctx context.Context, b *bot.Bot, update *models.Update
 		return
 	}
 
-	switch user.State {
-	case model.EventTypeAwaiting:
-		h.SaveEventType(ctx, b, update)
-	case model.EventNameAwaiting:
-		h.SaveEventName(ctx, b, update)
-	case model.EventDescriptionAwaiting:
-		h.SaveEventDescription(ctx, b, update)
-	case model.EventDateAwaiting:
-		h.SaveEventDate(ctx, b, update)
-	case model.EventTimeAwaiting:
-		h.SaveEventTime(ctx, b, update)
-	default:
+	if user.Role != model.RoleAdmin {
 		h.sendMessageWithKeyboard(ctx, b, chatId, "main menu", h.getMarkup(user.Role))
-		return
 	}
 
+	switch user.State {
+	case model.EventTypeAwaiting:
+		h.SaveEventType(ctx, b, update, user)
+	case model.EventNameAwaiting:
+		h.SaveEventName(ctx, b, update, user)
+	case model.EventDescriptionAwaiting:
+		h.SaveEventDescription(ctx, b, update, user)
+	case model.EventDateAwaiting:
+		h.SaveEventDate(ctx, b, update, user)
+	case model.EventTimeAwaiting:
+		h.SaveEventTime(ctx, b, update, user)
+	default:
+		h.sendMessageWithKeyboard(ctx, b, chatId, "main menu", h.getMarkup(user.Role))
+	}
 }
 
 func (h *Handler) StartHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
