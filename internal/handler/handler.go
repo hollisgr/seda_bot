@@ -13,6 +13,10 @@ import (
 	"github.com/go-telegram/bot/models"
 )
 
+const (
+	CreateEventBTN string = "Create Event"
+)
+
 type EventUseCase interface {
 	Save(ctx context.Context, event model.Event) (int, error)
 	Load(ctx context.Context, id int) (model.Event, error)
@@ -54,6 +58,7 @@ func (h *Handler) Default(ctx context.Context, b *bot.Bot, update *models.Update
 
 	fromUser := update.Message.From
 	chatId := update.Message.Chat.ID
+	fromMsg := update.Message.Text
 
 	user, err := h.userUC.LoadUser(ctx, fromUser.ID)
 	if err != nil {
@@ -67,6 +72,11 @@ func (h *Handler) Default(ctx context.Context, b *bot.Bot, update *models.Update
 
 	if user.Role != model.RoleAdmin {
 		h.sendMessageWithKeyboard(ctx, b, chatId, "main menu", h.getMarkup(user.Role))
+	}
+
+	if user.State == model.MainMenu && fromMsg == CreateEventBTN {
+		h.SaveEvent(ctx, b, update, user)
+		return
 	}
 
 	switch user.State {
@@ -166,7 +176,7 @@ func newAdminKeyboard() *models.ReplyKeyboardMarkup {
 	return &models.ReplyKeyboardMarkup{
 		Keyboard: [][]models.KeyboardButton{
 			{
-				{Text: "ADMIN BTN 1"},
+				{Text: "Create Event"},
 				{Text: "ADMIN BTN 2"},
 			},
 			{

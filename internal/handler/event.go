@@ -155,7 +155,22 @@ func (h *Handler) SaveEventTime(ctx context.Context, b *bot.Bot, update *models.
 	h.sendMessageWithKeyboard(ctx, b, chatId, text, h.getMarkup(user.Role))
 }
 
-func (h *Handler) SaveEvent(ctx context.Context, b *bot.Bot, update *models.Update) {}
+func (h *Handler) SaveEvent(ctx context.Context, b *bot.Bot, update *models.Update, user model.User) {
+	chatId := update.Message.Chat.ID
+	h.mu.Lock()
+	draft := model.Event{}
+	h.eventDrafts[user.TgId] = draft
+	h.mu.Unlock()
+
+	err := h.userUC.SetState(ctx, user.TgId, model.EventTypeAwaiting)
+	if err != nil {
+		log.Println("handler save event err: ", err)
+		h.sendMessage(ctx, b, chatId, "internal error, try later")
+		return
+	}
+
+	h.sendMessage(ctx, b, chatId, "enter event type")
+}
 
 func (h *Handler) LoadEvent(ctx context.Context, b *bot.Bot, update *models.Update) {}
 
