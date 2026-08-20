@@ -51,10 +51,11 @@ func (s *UserStorage) LoadUserByTgId(ctx context.Context, tgId int64) (model.Use
 			id,
 			tg_id, 
 			chat_id, 
+			name,
 			first_name, 
 			last_name, 
-			name,
-			role
+			role,
+			state
 		FROM 
 			users
 		WHERE
@@ -88,12 +89,13 @@ func (s *UserStorage) LoadUserList(ctx context.Context, offset int, limit int) (
 	query := `
 		SELECT
 			id,
-			tg_id,
-			chat_id,
+			tg_id, 
+			chat_id, 
 			name,
-			first_name,
-			last_name,
-			role
+			first_name, 
+			last_name, 
+			role,
+			state
 		FROM users
 		LIMIT @limit
 		OFFSET @offset
