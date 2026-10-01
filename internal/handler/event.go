@@ -74,7 +74,7 @@ func (h *Handler) SaveEventDescription(ctx context.Context, b *bot.Bot, update *
 func (h *Handler) SaveEventDate(ctx context.Context, b *bot.Bot, update *models.Update, user model.User) {
 	chatId := update.Message.Chat.ID
 	updDate := update.Message.Text
-	layout := "01-02-2006"
+	layout := "02-01-2006"
 	date, err := time.Parse(layout, updDate)
 	if err != nil {
 		log.Println("handler save event date err: ", err)
